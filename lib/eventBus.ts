@@ -6,7 +6,7 @@ import logger from './util/logger';
 type ListenerKey = object;
 
 export default class EventBus {
-    private callbacksByExtension: {[s: string]: {event: string; callback: (...args: unknown[]) => void}[]} = {};
+    private callbacksByExtension: { [s: string]: { event: string; callback: (...args: unknown[]) => void; }[]; } = {};
     private emitter = new events.EventEmitter();
 
     constructor() {
@@ -167,6 +167,20 @@ export default class EventBus {
         this.on('stateChange', callback, key);
     }
 
+    public emitUTSystemData(data: SystemFeedback): void {
+        this.emitter.emit('SystemData', data);
+    }
+    public onUTSystemData(key: ListenerKey, callback: (data: SystemFeedback) => void): void {
+        this.on('SystemData', callback, key);
+    }
+
+    public emitUTDeviceState(data: { topic: string, callback_url: string, payload: { [key: string]: any; }; }): void {
+        this.emitter.emit('DeviceState', data);
+    }
+    public onUTDeviceState(key: ListenerKey, callback: (data: { topic: string, callback_url: string, payload: { [key: string]: any; }; }) => void): void {
+        this.on('DeviceState', callback, key);
+    }
+
     private on(event: string, callback: (...args: unknown[]) => Promise<void> | void, key: ListenerKey): void {
         if (!this.callbacksByExtension[key.constructor.name]) this.callbacksByExtension[key.constructor.name] = [];
         const wrappedCallback = async (...args: unknown[]): Promise<void> => {
@@ -177,7 +191,7 @@ export default class EventBus {
                 logger.debug(error.stack);
             }
         };
-        this.callbacksByExtension[key.constructor.name].push({event, callback: wrappedCallback});
+        this.callbacksByExtension[key.constructor.name].push({ event, callback: wrappedCallback });
         this.emitter.on(event, wrappedCallback);
     }
 

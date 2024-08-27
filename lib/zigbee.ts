@@ -1,7 +1,7 @@
 import bind from 'bind-decorator';
-import {randomInt} from 'crypto';
+import { randomInt } from 'crypto';
 import stringify from 'json-stable-stringify-without-jsonify';
-import {Controller} from 'zigbee-herdsman';
+import { Controller } from 'zigbee-herdsman';
 import * as ZHEvents from 'zigbee-herdsman/dist/controller/events';
 
 import Device from './model/device';
@@ -16,8 +16,8 @@ const entityIDRegex = new RegExp(`^(.+?)(?:/([^/]+))?$`);
 export default class Zigbee {
     private herdsman: Controller;
     private eventBus: EventBus;
-    private groupLookup: {[s: number]: Group} = {};
-    private deviceLookup: {[s: string]: Device} = {};
+    private groupLookup: { [s: number]: Group; } = {};
+    private deviceLookup: { [s: string]: Device; } = {};
 
     constructor(eventBus: EventBus) {
         this.eventBus = eventBus;
@@ -72,7 +72,7 @@ export default class Zigbee {
 
         this.herdsman.on('adapterDisconnected', () => this.eventBus.emitAdapterDisconnected());
         this.herdsman.on('lastSeenChanged', (data: ZHEvents.LastSeenChangedPayload) => {
-            this.eventBus.emitLastSeenChanged({device: this.resolveDevice(data.device.ieeeAddr), reason: data.reason});
+            this.eventBus.emitLastSeenChanged({ device: this.resolveDevice(data.device.ieeeAddr), reason: data.reason });
         });
         this.herdsman.on('permitJoinChanged', (data: ZHEvents.PermitJoinChangedPayload) => {
             this.eventBus.emitPermitJoinChanged(data);
@@ -80,18 +80,18 @@ export default class Zigbee {
         this.herdsman.on('deviceNetworkAddressChanged', (data: ZHEvents.DeviceNetworkAddressChangedPayload) => {
             const device = this.resolveDevice(data.device.ieeeAddr);
             logger.debug(`Device '${device.name}' changed network address`);
-            this.eventBus.emitDeviceNetworkAddressChanged({device});
+            this.eventBus.emitDeviceNetworkAddressChanged({ device });
         });
         this.herdsman.on('deviceAnnounce', (data: ZHEvents.DeviceAnnouncePayload) => {
             const device = this.resolveDevice(data.device.ieeeAddr);
             logger.debug(`Device '${device.name}' announced itself`);
-            this.eventBus.emitDeviceAnnounce({device});
+            this.eventBus.emitDeviceAnnounce({ device });
         });
         this.herdsman.on('deviceInterview', async (data: ZHEvents.DeviceInterviewPayload) => {
             const device = this.resolveDevice(data.device.ieeeAddr);
             /* istanbul ignore if */ if (!device) return; // Prevent potential race
             await device.resolveDefinition();
-            const d = {device, status: data.status};
+            const d = { device, status: data.status };
             this.logDeviceInterview(d);
             this.eventBus.emitDeviceInterview(d);
         });
@@ -100,24 +100,24 @@ export default class Zigbee {
             /* istanbul ignore if */ if (!device) return; // Prevent potential race
             await device.resolveDefinition();
             logger.info(`Device '${device.name}' joined`);
-            this.eventBus.emitDeviceJoined({device});
+            this.eventBus.emitDeviceJoined({ device });
         });
         this.herdsman.on('deviceLeave', (data: ZHEvents.DeviceLeavePayload) => {
             const name = settings.getDevice(data.ieeeAddr)?.friendly_name || data.ieeeAddr;
             logger.warning(`Device '${name}' left the network`);
-            this.eventBus.emitDeviceLeave({ieeeAddr: data.ieeeAddr, name});
+            this.eventBus.emitDeviceLeave({ ieeeAddr: data.ieeeAddr, name });
         });
         this.herdsman.on('message', async (data: ZHEvents.MessagePayload) => {
             const device = this.resolveDevice(data.device.ieeeAddr);
             await device.resolveDefinition();
             logger.debug(
                 `Received Zigbee message from '${device.name}', type '${data.type}', ` +
-                    `cluster '${data.cluster}', data '${stringify(data.data)}' from endpoint ${data.endpoint.ID}` +
-                    (data.hasOwnProperty('groupID') ? ` with groupID ${data.groupID}` : ``) +
-                    (device.zh.type === 'Coordinator' ? `, ignoring since it is from coordinator` : ``),
+                `cluster '${data.cluster}', data '${stringify(data.data)}' from endpoint ${data.endpoint.ID}` +
+                (data.hasOwnProperty('groupID') ? ` with groupID ${data.groupID}` : ``) +
+                (device.zh.type === 'Coordinator' ? `, ignoring since it is from coordinator` : ``),
             );
             if (device.zh.type === 'Coordinator') return;
-            this.eventBus.emitDeviceMessage({...data, device});
+            this.eventBus.emitDeviceMessage({ ...data, device });
         });
 
         logger.info(`zigbee-herdsman started (${startResult})`);
@@ -162,13 +162,13 @@ export default class Zigbee {
             logger.info(`Successfully interviewed '${name}', device has successfully been paired`);
 
             if (data.device.isSupported) {
-                const {vendor, description, model} = data.device.definition;
+                const { vendor, description, model } = data.device.definition;
                 logger.info(`Device '${name}' is supported, identified as: ${vendor} ${description} (${model})`);
             } else {
                 logger.warning(
                     `Device '${name}' with Zigbee model '${data.device.zh.modelID}' and manufacturer name ` +
-                        `'${data.device.zh.manufacturerName}' is NOT supported, ` +
-                        `please follow https://www.zigbee2mqtt.io/advanced/support-new-devices/01_support_new_devices.html`,
+                    `'${data.device.zh.manufacturerName}' is NOT supported, ` +
+                    `please follow https://www.zigbee2mqtt.io/advanced/support-new-devices/01_support_new_devices.html`,
                 );
             }
         } else if (data.status === 'failed') {
@@ -180,13 +180,13 @@ export default class Zigbee {
     }
 
     private generateNetworkKey(): number[] {
-        const key = Array.from({length: 16}, () => randomInt(256));
+        const key = Array.from({ length: 16 }, () => randomInt(256));
         settings.set(['advanced', 'network_key'], key);
         return key;
     }
 
     private generateExtPanID(): number[] {
-        const key = Array.from({length: 8}, () => randomInt(256));
+        const key = Array.from({ length: 8 }, () => randomInt(256));
         settings.set(['advanced', 'ext_pan_id'], key);
         return key;
     }
@@ -209,9 +209,9 @@ export default class Zigbee {
         return this.herdsman.backup();
     }
 
-    async coordinatorCheck(): Promise<{missingRouters: Device[]}> {
+    async coordinatorCheck(): Promise<{ missingRouters: Device[]; }> {
         const check = await this.herdsman.coordinatorCheck();
-        return {missingRouters: check.missingRouters.map((d) => this.resolveDevice(d.ieeeAddr))};
+        return { missingRouters: check.missingRouters.map((d) => this.resolveDevice(d.ieeeAddr)) };
     }
 
     async getNetworkParameters(): Promise<zh.NetworkParameters> {
@@ -290,7 +290,7 @@ export default class Zigbee {
         }
     }
 
-    resolveEntityAndEndpoint(ID: string): {ID: string; entity: Device | Group; endpointID: string; endpoint: zh.Endpoint} {
+    resolveEntityAndEndpoint(ID: string): { ID: string; entity: Device | Group; endpointID: string; endpoint: zh.Endpoint; } {
         // This function matches the following entity formats:
         // device_name          (just device name)
         // device_name/ep_name  (device name and endpoint numeric ID or name)
@@ -318,7 +318,7 @@ export default class Zigbee {
         // (or the entity is a group)
         const endpoint = deviceOrGroup?.isDevice() ? deviceOrGroup.endpoint(endpointNameOrID) : null;
 
-        return {ID: entityName, entity: deviceOrGroup, endpointID: endpointNameOrID, endpoint: endpoint};
+        return { ID: entityName, entity: deviceOrGroup, endpointID: endpointNameOrID, endpoint: endpoint };
     }
 
     firstCoordinatorEndpoint(): zh.Endpoint {
@@ -382,7 +382,7 @@ export default class Zigbee {
         await this.herdsman.touchlinkIdentify(ieeeAddr, channel);
     }
 
-    async touchlinkScan(): Promise<{ieeeAddr: string; channel: number}[]> {
+    async touchlinkScan(): Promise<{ ieeeAddr: string; channel: number; }[]> {
         return this.herdsman.touchlinkScan();
     }
 

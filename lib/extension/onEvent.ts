@@ -26,7 +26,7 @@ export default class OnEvent extends Extension {
     }
 
     private convertData(data: KeyValue): KeyValue {
-        return {...data, device: data.device.zh};
+        return { ...data, device: data.device.zh };
     }
 
     override async stop(): Promise<void> {

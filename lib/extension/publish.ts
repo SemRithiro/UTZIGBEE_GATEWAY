@@ -67,22 +67,22 @@ export default class Publish extends Extension {
 
         // Now parse the device/group name, and endpoint name
         const entity = this.zigbee.resolveEntityAndEndpoint(deviceNameAndEndpoint);
-        return {ID: entity.ID, endpoint: entity.endpointID, type: match[2] as 'get' | 'set', attribute: attribute};
+        return { ID: entity.ID, endpoint: entity.endpointID, type: match[2] as 'get' | 'set', attribute: attribute };
     }
 
     parseMessage(parsedTopic: ParsedTopic, data: eventdata.MQTTMessage): KeyValue | null {
         if (parsedTopic.attribute) {
             try {
-                return {[parsedTopic.attribute]: JSON.parse(data.message)};
+                return { [parsedTopic.attribute]: JSON.parse(data.message) };
             } catch (e) {
-                return {[parsedTopic.attribute]: data.message};
+                return { [parsedTopic.attribute]: data.message };
             }
         } else {
             try {
                 return JSON.parse(data.message);
             } catch (e) {
                 if (stateValues.includes(data.message.toLowerCase())) {
-                    return {state: data.message};
+                    return { state: data.message };
                 } else {
                     return null;
                 }
@@ -142,7 +142,7 @@ export default class Publish extends Extension {
 
         const re = this.zigbee.resolveEntity(parsedTopic.ID);
         if (re == null) {
-            await this.legacyLog({type: `entity_not_found`, message: {friendly_name: parsedTopic.ID}});
+            await this.legacyLog({ type: `entity_not_found`, message: { friendly_name: parsedTopic.ID } });
             logger.error(`Entity '${parsedTopic.ID}' is unknown`);
             return;
         }
@@ -160,8 +160,8 @@ export default class Publish extends Extension {
         const membersState =
             re instanceof Group
                 ? Object.fromEntries(
-                      re.zh.members.map((e) => [e.getDevice().ieeeAddr, this.state.get(this.zigbee.resolveEntity(e.getDevice().ieeeAddr))]),
-                  )
+                    re.zh.members.map((e) => [e.getDevice().ieeeAddr, this.state.get(this.zigbee.resolveEntity(e.getDevice().ieeeAddr))]),
+                )
                 : null;
         let converters: zhc.Tz.Converter[];
         {
@@ -196,16 +196,16 @@ export default class Publish extends Extension {
         entries.sort((a) => (['state', 'brightness', 'brightness_percent'].includes(a[0]) ? sorter : sorter * -1));
 
         // For each attribute call the corresponding converter
-        const usedConverters: {[s: number]: zhc.Tz.Converter[]} = {};
-        const toPublish: {[s: number | string]: KeyValue} = {};
-        const toPublishEntity: {[s: number | string]: Device | Group} = {};
+        const usedConverters: { [s: number]: zhc.Tz.Converter[]; } = {};
+        const toPublish: { [s: number | string]: KeyValue; } = {};
+        const toPublishEntity: { [s: number | string]: Device | Group; } = {};
         const addToToPublish = (entity: Device | Group, payload: KeyValue): void => {
             const ID = entity.ID;
             if (!(ID in toPublish)) {
                 toPublish[ID] = {};
                 toPublishEntity[ID] = entity;
             }
-            toPublish[ID] = {...toPublish[ID], ...payload};
+            toPublish[ID] = { ...toPublish[ID], ...payload };
         };
 
         const endpointNames = re instanceof Device ? re.getEndpointNames() : [];
@@ -252,7 +252,7 @@ export default class Publish extends Extension {
             const meta = {
                 endpoint_name: endpointName,
                 options: entitySettingsKeyValue,
-                message: {...message},
+                message: { ...message },
                 logger,
                 device,
                 state: entityState,
@@ -310,7 +310,7 @@ export default class Publish extends Extension {
                 const message = `Publish '${parsedTopic.type}' '${key}' to '${re.name}' failed: '${error}'`;
                 logger.error(message);
                 logger.debug(error.stack);
-                await this.legacyLog({type: `zigbee_publish_error`, message, meta: {friendly_name: re.name}});
+                await this.legacyLog({ type: `zigbee_publish_error`, message, meta: { friendly_name: re.name } });
             }
 
             usedConverters[endpointOrGroupID].push(converter);
@@ -318,13 +318,13 @@ export default class Publish extends Extension {
 
         for (const [ID, payload] of Object.entries(toPublish)) {
             if (Object.keys(payload).length != 0) {
-                await this.publishEntityState(toPublishEntity[ID], payload);
+                await this.publishEntityState(toPublishEntity[ID], payload, 'mqttToggle');
             }
         }
 
         const scenesChanged = Object.values(usedConverters).some((cl) => cl.some((c) => c.key.some((k) => sceneConverterKeys.includes(k))));
         if (scenesChanged) {
-            this.eventBus.emitScenesChanged({entity: re});
+            this.eventBus.emitScenesChanged({ entity: re });
         }
     }
 }

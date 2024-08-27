@@ -6,7 +6,7 @@ import type TypeGroup from 'lib/model/group';
 import type TypeMQTT from 'lib/mqtt';
 import type TypeState from 'lib/state';
 import type TypeZigbee from 'lib/zigbee';
-import type {QoS} from 'mqtt-packet';
+import type { QoS } from 'mqtt-packet';
 import type {
     NetworkParameters as ZHNetworkParameters,
     CoordinatorVersion as ZHCoordinatorVersion,
@@ -15,11 +15,11 @@ import type {
     RoutingTableEntry as ZHRoutingTableEntry,
 } from 'zigbee-herdsman/dist/adapter/tstype';
 import type * as ZHEvents from 'zigbee-herdsman/dist/controller/events';
-import type {Device as ZHDevice, Group as ZHGroup, Endpoint as ZHEndpoint} from 'zigbee-herdsman/dist/controller/model';
-import type {Cluster as ZHCluster, FrameControl as ZHFrameControl} from 'zigbee-herdsman/dist/zspec/zcl/definition/tstype';
+import type { Device as ZHDevice, Group as ZHGroup, Endpoint as ZHEndpoint } from 'zigbee-herdsman/dist/controller/model';
+import type { Cluster as ZHCluster, FrameControl as ZHFrameControl } from 'zigbee-herdsman/dist/zspec/zcl/definition/tstype';
 import type * as zhc from 'zigbee-herdsman-converters';
 
-import {LogLevel} from 'lib/util/settings';
+import { LogLevel } from 'lib/util/settings';
 
 declare global {
     // Define some class types as global
@@ -33,7 +33,7 @@ declare global {
 
     // Types
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    type ExternalDefinition = zhc.Definition & {homeassistant: any};
+    type ExternalDefinition = zhc.Definition & { homeassistant: any; };
     interface MQTTResponse {
         data: KeyValue;
         status: 'error' | 'ok';
@@ -43,12 +43,16 @@ declare global {
     interface MQTTOptions {
         qos?: QoS;
         retain?: boolean;
-        properties?: {messageExpiryInterval: number};
+        properties?: { messageExpiryInterval: number; };
     }
-    type Scene = {id: number; name: string};
-    type StateChangeReason = 'publishDebounce' | 'groupOptimistic' | 'lastSeenChanged' | 'publishCached';
+    type Scene = { id: number; name: string; };
+    type DeviceType = { name: string, ieeeAddr: string, friendly_name: string, state?: string, energy?: number, vendor: string, model: string; availability: string; };
+    type SystemFeedback = { [key: string]: string; };
+    type SystemFeedbackType = { [key: string]: SystemFeedback; };
+    type DeviceStatus = "Rename" | "State Changed" | "Cached" | "Toggle" | "Last Seen" | "Error";
+    type StateChangeReason = 'publishDebounce' | 'groupOptimistic' | 'lastSeenChanged' | 'publishCached' | 'deviceToggle' | 'mqttToggle';
     type PublishEntityState = (entity: Device | Group, payload: KeyValue, stateChangeReason?: StateChangeReason) => Promise<void>;
-    type RecursivePartial<T> = {[P in keyof T]?: RecursivePartial<T[P]>};
+    type RecursivePartial<T> = { [P in keyof T]?: RecursivePartial<T[P]> };
     interface KeyValue {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         [s: string]: any;
@@ -72,10 +76,10 @@ declare global {
     }
 
     namespace eventdata {
-        type EntityRenamed = {entity: Device | Group; homeAssisantRename: boolean; from: string; to: string};
-        type DeviceRemoved = {ieeeAddr: string; name: string};
-        type MQTTMessage = {topic: string; message: string};
-        type MQTTMessagePublished = {topic: string; payload: string; options: {retain: boolean; qos: number}};
+        type EntityRenamed = { entity: Device | Group; homeAssisantRename: boolean; from: string; to: string; };
+        type DeviceRemoved = { ieeeAddr: string; name: string; };
+        type MQTTMessage = { topic: string; message: string; };
+        type MQTTMessagePublished = { topic: string; payload: string; options: { retain: boolean; qos: number; }; };
         type StateChange = {
             entity: Device | Group;
             from: KeyValue;
@@ -88,16 +92,16 @@ declare global {
             device: Device;
             reason: 'deviceAnnounce' | 'networkAddress' | 'deviceJoined' | 'messageEmitted' | 'messageNonEmitted';
         };
-        type DeviceNetworkAddressChanged = {device: Device};
-        type DeviceAnnounce = {device: Device};
-        type DeviceInterview = {device: Device; status: 'started' | 'successful' | 'failed'};
-        type DeviceJoined = {device: Device};
-        type EntityOptionsChanged = {entity: Device | Group; from: KeyValue; to: KeyValue};
-        type ExposesChanged = {device: Device};
-        type Reconfigure = {device: Device};
-        type DeviceLeave = {ieeeAddr: string; name: string};
-        type GroupMembersChanged = {group: Group; action: 'remove' | 'add' | 'remove_all'; endpoint: zh.Endpoint; skipDisableReporting: boolean};
-        type PublishEntityState = {entity: Group | Device; message: KeyValue; stateChangeReason: StateChangeReason; payload: KeyValue};
+        type DeviceNetworkAddressChanged = { device: Device; };
+        type DeviceAnnounce = { device: Device; };
+        type DeviceInterview = { device: Device; status: 'started' | 'successful' | 'failed'; };
+        type DeviceJoined = { device: Device; };
+        type EntityOptionsChanged = { entity: Device | Group; from: KeyValue; to: KeyValue; };
+        type ExposesChanged = { device: Device; };
+        type Reconfigure = { device: Device; };
+        type DeviceLeave = { ieeeAddr: string; name: string; };
+        type GroupMembersChanged = { group: Group; action: 'remove' | 'add' | 'remove_all'; endpoint: zh.Endpoint; skipDisableReporting: boolean; };
+        type PublishEntityState = { entity: Group | Device; message: KeyValue; stateChangeReason: StateChangeReason; payload: KeyValue; };
         type DeviceMessage = {
             type: ZHEvents.MessagePayloadType;
             device: Device;
@@ -106,9 +110,9 @@ declare global {
             groupID: number;
             cluster: string | number;
             data: KeyValue | Array<string | number>;
-            meta: {zclTransactionSequenceNumber?: number; manufacturerCode?: number; frameControl?: ZHFrameControl};
+            meta: { zclTransactionSequenceNumber?: number; manufacturerCode?: number; frameControl?: ZHFrameControl; };
         };
-        type ScenesChanged = {entity: Device | Group};
+        type ScenesChanged = { entity: Device | Group; };
     }
 
     // Settings
@@ -121,9 +125,25 @@ declare global {
             legacy_triggers: boolean;
         };
         permit_join?: boolean;
+        gateway: {
+            port: number,
+            cors: string,
+            callbacks: string[];
+            battery_critical_level?: number;
+            default_devices?: string[];
+            alarmSetting?: {
+                triggers: string[],
+                models: string[],
+                type: 'sound' | 'light' | 'sound+light' | 'normal',
+                volume: 'mute' | 'low' | 'middle' | 'high',
+                ringtone: 'melody1' | 'melody2' | 'melody3' | 'melody4' | 'melody5' | 'melody6' | 'melody7' | 'melody8' | 'door' | 'water' | 'temperature' | 'entered' | 'left',
+                duration: number;
+            };
+            ignoredPerperties?: string[],
+        },
         availability?: {
-            active: {timeout: number};
-            passive: {timeout: number};
+            active: { timeout: number; };
+            passive: { timeout: number; };
         };
         external_converters: string[];
         mqtt: {
@@ -184,8 +204,8 @@ declare global {
             ssl_cert?: string;
             ssl_key?: string;
         };
-        devices?: {[s: string]: DeviceOptions};
-        groups?: {[s: string]: GroupOptions};
+        devices?: { [s: string]: DeviceOptions; };
+        groups?: { [s: string]: GroupOptions; };
         device_options: KeyValue;
         advanced: {
             legacy_api: boolean;
@@ -229,7 +249,7 @@ declare global {
         ID?: string;
         disabled?: boolean;
         retention?: number;
-        availability?: boolean | {timeout: number};
+        availability?: boolean | { timeout: number; };
         optimistic?: boolean;
         retrieve_state?: boolean;
         debounce?: number;

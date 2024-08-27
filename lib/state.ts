@@ -1,6 +1,7 @@
 import fs from 'fs';
 import objectAssignDeep from 'object-assign-deep';
 
+import Device from './model/device';
 import data from './util/data';
 import logger from './util/logger';
 import * as settings from './util/settings';
@@ -31,7 +32,7 @@ const dontCacheProperties = [
 ];
 
 class State {
-    private state: {[s: string | number]: KeyValue} = {};
+    private state: { [s: string | number]: KeyValue; } = {};
     private file = data.joinPath('state.json');
     private timer: NodeJS.Timeout = null;
 
@@ -98,13 +99,18 @@ class State {
     set(entity: Group | Device, update: KeyValue, reason: string = null): KeyValue {
         const fromState = this.state[entity.ID] || {};
         const toState = objectAssignDeep({}, fromState, update);
-        const newCache = {...toState};
+        const newCache = { ...toState };
         const entityDontCacheProperties = entity.options.filtered_cache || [];
 
         utils.filterProperties(dontCacheProperties.concat(entityDontCacheProperties), newCache);
 
-        this.state[entity.ID] = newCache;
-        this.eventBus.emitStateChange({entity, from: fromState, to: toState, reason, update});
+        if (entity.isDevice()) {
+            const e = new Device(entity.zh);
+            if (settings.get()['gateway'] && !settings.get()['gateway']['default_devices'].includes(e.definition?.model))
+                this.state[entity.ID] = newCache;
+        } else
+            this.state[entity.ID] = newCache;
+        this.eventBus.emitStateChange({ entity, from: fromState, to: toState, reason, update });
         return toState;
     }
 

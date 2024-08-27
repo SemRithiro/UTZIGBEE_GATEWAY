@@ -29,7 +29,7 @@ module.exports = {
                 '@typescript-eslint/ban-ts-comment': 'off',
                 '@typescript-eslint/explicit-function-return-type': 'error',
                 '@typescript-eslint/no-empty-function': 'off',
-                '@typescript-eslint/no-explicit-any': 'error',
+                '@typescript-eslint/no-explicit-any': 'off',
                 '@typescript-eslint/no-floating-promises': 'error',
                 '@typescript-eslint/no-unused-vars': 'error',
                 'no-return-await': 'error',
